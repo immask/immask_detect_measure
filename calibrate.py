@@ -1,7 +1,6 @@
-# Assuming this is done on iPhones for now.
-
 import cv2
 import numpy as np
+import pickle
 
 class Calibrate:
 	def __init__(self, name='', image=None, device=''):   
@@ -10,13 +9,11 @@ class Calibrate:
 		self.device = device
 		self.mtx = None
 		self.dist = None
-		self.rvecs = None
-		self.tvecs = None
 		self.obj_pts = []
 		self.img_pts = []
 
+	# From the OpenCV documentation
 	def get_obj_pts(self, show_img=False):
-		# From the OpenCV documentation
 		criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 		objp = np.zeros((8*7, 3), np.float32)
 		objp[:, :2] = np.mgrid[0:7, 0:8].T.reshape(-1,2)
@@ -35,7 +32,12 @@ class Calibrate:
 			cv2.destroyAllWindows()
 
 	def calibrate(self):
-		ret, self.mtx, self.dist, self.rvecs, self.tvecs = cv2.calibrateCamera(self.obj_pts, self.img_pts, self.image.shape[::-1], None, None)
+		ret, self.mtx, self.dist, _, _ = cv2.calibrateCamera(self.obj_pts, self.img_pts, self.image.shape[::-1], None, None)
+
+	def save_info(self):
+		calibrate_param = {'mtx': self.mtx, 'dist': self.dist}
+		filename = './camera_correction/' + self.device + '_' + 'calibrate_param.pickle'
+		pickle.dump(calibrate_param, open(filename, "wb"))
 	
 	def undistort(self, img_to_undistort, show_img=True):
 		img = cv2.imread(img_to_undistort)
@@ -53,20 +55,24 @@ class Calibrate:
 			cv2.destroyAllWindows()
 
 	@classmethod
-	def load_chessboard_image(cls, img_file): 
+	def load_chessboard_image(cls, img_file='chessboard_calibrate.jpg', device=''): 
 		img = cv2.imread(img_file)
 		gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 		gray_img = cv2.resize(gray_img, (720, 720))
-		return cls('chessboard', gray_img)
+		return cls(name='chessboard', image=gray_img, device=device)
 	
 	@classmethod
-	def load_qr_image(cls, img_file):
+	def load_qr_image(cls, img_file='chessboard_calibrate.jpg', device=''):
 		img = cv2.imread(img_file)
 		gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 		gray_img = cv2.resize(gray_img, (720, 720))
-		return cls('qr', gray_img)
+		return cls(name='qr', image=gray_img, device=device)
 
-cb = Calibrate.load_chessboard_image('chessboard_calibrate.jpg')
-cb.get_obj_pts()
-cb.calibrate()
-cb.undistort('andy_selfie.jpg')
+def main():
+	cb = Calibrate.load_chessboard_image(img_file='chessboard_calibrate.jpg', device='iPhone_8')
+	cb.get_obj_pts()
+	cb.calibrate()
+	cb.save_info()
+
+if __name__ == "__main__":
+	main()
