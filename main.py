@@ -22,7 +22,7 @@ def main():
     #dist = calibration_param['dist']
 
     # Getting the image
-    img = cv2.imread('andy_selfie.jpg')
+    img = cv2.imread('./img/andy_selfie.jpg')
     
     # Here, we will be correcting the image in question using the calibration information and
     # generating a new camera matrix

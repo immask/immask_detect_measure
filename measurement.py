@@ -24,12 +24,14 @@ class Measurement:
     def find_all_pts(self):
         if self.pts:
             self.pts = []
+            
         for pt in label_of_pts:
             self.pts.append(self.get_pt(pt))
 
     def find_all_faces(self):
         if self.faces:
             self.faces = []
+
         self.faces.append([label_of_pts.index(28), label_of_pts.index(30), label_of_pts.index(40)])
         self.faces.append([label_of_pts.index(28), label_of_pts.index(30), label_of_pts.index(48)])
         self.faces.append([label_of_pts.index(30), label_of_pts.index(40), label_of_pts.index(41)])
@@ -64,10 +66,10 @@ class Measurement:
                 mask.vectors[i][j] = pts_np[f[j],:]
 
         # Write the mesh to file "mask.stl"
-        mask.save('mask.stl')
+        mask.save('stl/mask.stl')
 
     def preview(self):
-        mesh = trimesh.load('mask.stl')
+        mesh = trimesh.load('stl/mask.stl')
         mesh.show()
 
     def distance(self, pt_0=[0, 0, 0], pt_1=[0, 0, 0]):
