@@ -1,12 +1,13 @@
 import numpy as np
 import math
+import matplotlib.pyplot as plt
+from mpl_toolkits import mplot3d
 from stl import mesh
 import trimesh
 
 # Points 69, 70, 71 are for one cheek, and points 79, 80, 81 are for the
 # other cheek
-label_of_pts = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, \
-                17, 28, 30, 69, 70, 71, 79, 80, 81]
+label_of_pts = list(range(1, 82))
 
 class Measurement:
     def __init__(self, features_3d, ref_dist=0, units='cm'):
@@ -69,22 +70,27 @@ class Measurement:
         return pts_list[get_idx]
 
     # The rest of the points can be found through some point manipulation. We will still need 
-    # features_3d to approximate points on the cheeks.
+    # features_3d to approximate points on the cheeks. THESE ARE NOT PART OF THE ORIGINAL 68
+    # POINTS IDENTIFIED BY THE DETECTION ALGORITHM!
     def extract_pt_thru_calc(self, label):
         if label == 69:
-            # Compute point by knowing the nostil, middle to right eye, and eyebrow.
-            return
+            # Compute point by knowing the nostil, middle to right eye, and eyebrow. This is for the
+            # middle of the cheek.
+            return [self.get_pt(46)[0], self.get_pt(34)[1], self.get_pt(24)[2]]
         elif label == 70:
-            return
+            return [self.get_pt(27)[0], self.get_pt(29)[1], self.get_pt(27)[2]]
         elif label == 71:
-            return
+            return [self.get_pt(48)[0], self.get_pt(29)[1], self.get_pt(48)[2]]
         elif label == 79:
-            # Compute point by knowing the nostil, middle to left eye, and eyebrow.
-            return
+            # Compute point by knowing the nostil, middle to right eye, and eyebrow. This is for the
+            # middle of the cheek.
+            return [self.get_pt(37)[0], self.get_pt(34)[1], self.get_pt(21)[2]]
         elif label == 80:
-            return
+            return [self.get_pt(40)[0], self.get_pt(29)[1], self.get_pt(40)[2]]
         elif label == 81:
-            return
+            return [self.get_pt(18)[0], self.get_pt(29)[1], self.get_pt(18)[2]]
+        else:
+            return [0, 0, 0]
 
     def get_pt(self, label):
         if label >= 1 and label < 18:
@@ -105,7 +111,20 @@ class Measurement:
             return self.extract_pt_from_feat('lips', label)
         elif label >= 61 and label < 69:
             return self.extract_pt_from_feat('teeth', label)
-        elif label >= 69 and label < label_of_pts[-1]:
-            return self.extract_pt_thru_calc(label)
         else:
-            return [0, 0, 0]
+            return self.extract_pt_thru_calc(label)
+
+    def plot(self):
+        ax = plt.axes(projection='3d')
+        # Data for three-dimensional scattered points
+        for feat in self.features_3d:
+            feat_pts = self.features_3d[feat]['pts']
+            for pt in feat_pts:
+                ax.scatter3D(pt[0], pt[1], pt[2], c='Black')
+        # This is point 79
+        ax.scatter3D(self.get_pt(37)[0], self.get_pt(34)[1], self.get_pt(21)[2], c='Red')
+        # This is point 80
+        ax.scatter3D(self.get_pt(40)[0], self.get_pt(29)[1], self.get_pt(40)[2], c='Green')
+        # This is point 81
+        ax.scatter3D(self.get_pt(18)[0], self.get_pt(29)[1], self.get_pt(18)[2], c='Blue')
+        plt.show()
