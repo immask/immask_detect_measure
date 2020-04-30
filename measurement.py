@@ -1,8 +1,11 @@
+from itertools import combinations
 import numpy as np
 import math
 import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
 from stl import mesh
+import svgwrite
+from svgwrite import cm, mm
 import trimesh
 
 # Points 69, 70, 71 are for one cheek, and points 79, 80, 81 are for the
@@ -12,18 +15,13 @@ label_of_pts = list(range(1, 82))
 class Measurement:
     def __init__(self, features_3d, ref_dist=0, units='cm'):
         self.faces = []
-        self.faces_construct = open('faces_construct.im')
+        self.faces_construct = open('faces_construct.im')   # This will help create the face using preexisting points
         self.pts = []
+        self.shapes = {}
         self.features_3d = features_3d
         self.ref_dist = ref_dist
         self.units = units      # This can also be in inches.
-
-    def measure_mask(self):
-        # Get the distance between the corner of the mouth and the tip of the nose.
-        tip_nose_pt = self.get_pt(30)
-        corner_mouth_pt = self.get_pt(49)
-        dist_3d_space = self.distance(tip_nose_pt, corner_mouth_pt)
-        ratio = self.ref_dist / dist_3d_space
+        self.ratio = self.measure_ratio()
 
     def find_all_pts(self):
         if self.pts:
@@ -41,6 +39,8 @@ class Measurement:
             self.faces.append([label_of_pts.index(labels[0]),  
                             label_of_pts.index(labels[1]), 
                             label_of_pts.index(labels[2])])
+        self.faces_construct.seek(0)
+        print(self.faces)
 
     def save_stl(self):
         pts_np = np.asarray(self.pts)
@@ -58,9 +58,6 @@ class Measurement:
     def preview(self):
         mesh = trimesh.load('stl/mask.stl')
         mesh.show()
-
-    def distance(self, pt_0=[0, 0, 0], pt_1=[0, 0, 0]):
-        return math.sqrt((pt_1[0] - pt_0[0])**2 + (pt_1[1] - pt_0[1])**2 + (pt_1[2] - pt_0[2])**2)  
 
     # The first 68 points of the face can be obtained through features_3d. 
     def extract_pt_from_feat(self, facial_feature, label):
@@ -121,10 +118,29 @@ class Measurement:
             feat_pts = self.features_3d[feat]['pts']
             for pt in feat_pts:
                 ax.scatter3D(pt[0], pt[1], pt[2], c='Black')
-        # This is point 79
-        ax.scatter3D(self.get_pt(37)[0], self.get_pt(34)[1], self.get_pt(21)[2], c='Red')
-        # This is point 80
-        ax.scatter3D(self.get_pt(40)[0], self.get_pt(29)[1], self.get_pt(40)[2], c='Green')
-        # This is point 81
-        ax.scatter3D(self.get_pt(18)[0], self.get_pt(29)[1], self.get_pt(18)[2], c='Blue')
         plt.show()
+
+    def distance(self, pt_0=[0, 0, 0], pt_1=[0, 0, 0]):
+        return math.sqrt((pt_1[0] - pt_0[0])**2 + (pt_1[1] - pt_0[1])**2 + (pt_1[2] - pt_0[2])**2)  
+
+    def measure_ratio(self):
+        # Get the distance between the corner of the mouth and the tip of the nose.
+        tip_nose_pt = self.get_pt(30)
+        corner_mouth_pt = self.get_pt(49)
+        dist_3d_space = self.distance(tip_nose_pt, corner_mouth_pt)
+        if self.units == 'in':
+            return self.ref_dist * 2.54 / dist_3d_space
+        else:
+            return self.ref_dist / dist_3d_space
+
+    def flattening(self):
+        for i, line in enumerate(self.faces_construct):
+            labels = [int(label) for label in line.split(',')]
+            self.shapes[i + 1] = {}
+            self.shapes[i + 1]['labels'] = labels
+            for j, combo in enumerate(list(combinations(labels, 2))):
+                line_str = 'line_' + str(j + 1)
+                pt_0 = self.get_pt(combo[0])
+                pt_1 = self.get_pt(combo[1])
+                self.shapes[i + 1][line_str] = self.ratio * self.distance(pt_0, pt_1)
+        print(self.shapes)

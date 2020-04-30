@@ -46,9 +46,8 @@ def main():
     meas = Measurement(features_3d=d.features_3d, ref_dist=5.5, units='cm')
     meas.find_all_pts()
     meas.find_all_faces()
-    meas.plot()
     meas.save_stl()
-    meas.preview()
+    meas.flattening()
     
 if __name__ == "__main__":
 	main()
