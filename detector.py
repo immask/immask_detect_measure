@@ -91,7 +91,7 @@ class Detector:
 			plt.show()
 
 def main():
-	d = Detector.load_image_file('andy_selfie.jpg')
+	d = Detector.load_image_file('img/andy_selfie.jpg')
 	d.detect_2d()
 	print(d.features_2d)
 	d.plot('2d')
